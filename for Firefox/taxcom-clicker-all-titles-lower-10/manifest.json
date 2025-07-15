@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+  "name": "Taxcom Clicker Lower",
+  "version": "0.2",
+
+  "description": "Обрабатывает ЭПЛ на сайте epl.taxcom.ru. Кликает нижний ЭПЛ из списка на странице /at_signing. Запуск: https://epl.taxcom.ru/at_signing/?start-all-titles-lower-10",
+  "icons": {
+    "48": "icons/icon_48.png"
+  },
+
+  "permissions": ["activeTab", "privacy"],
+
+  "browser_action": {
+    "default_icon": "icons/icon_32.png",
+    "default_title": "Taxcom Clicker",
+    "default_popup": "popup/control-panel.html"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["*://epl.taxcom.ru/*"],
+      "js": ["js/main.js"]
+    }
+  ],
+  
+  "browser_specific_settings": {
+      "gecko": {
+        "id": "taxcom-clicker-lower-10@taxilogic.com"
+      }
+    }
+}

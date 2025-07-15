@@ -1,0 +1,34 @@
+{
+  "manifest_version": 2,
+  "name": "taxcom-clicker-all-titles-upper-at-least-3-fast",
+  "version": "1",
+
+  "description": "Обрабатывает ЭПЛ на сайте epl.taxcom.ru. Кликает верхний ЭПЛ из списка на странице /at_signing, если на странице больше двух записей. Обрабатывает зависание во время подписания. Запуск: https://epl.taxcom.ru/at_signing/?start-taxcom-clicker-all-titles-upper-at-least-3-fast",
+  "icons": {
+    "48": "icons/icon_48.png"
+  },
+
+  "permissions": ["activeTab", "privacy"],
+
+  "browser_action": {
+    "default_icon": "icons/icon_32.png",
+    "default_title": "Taxcom Clicker",
+    "default_popup": "popup/control-panel.html"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["*://epl.taxcom.ru/*"],
+      "js": [
+        "js/helpers.js",
+        "js/main.js"
+       ]
+    }
+  ],
+  
+  "browser_specific_settings": {
+      "gecko": {
+        "id": "taxcom-clicker-all-titles-upper-at-least-3-fast@taxilogic.com"
+      }
+    }
+}
