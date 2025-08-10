@@ -127,6 +127,11 @@ function main() {
         
         if(!checkFilters()) {
             setBorderStyle(BORDER_STYLE_WARNING);
+            // пытаюсь кликнуть по фильтру
+            if(pressEnterOnFilter()) {
+                location.href = URL_AT_SIGNING;
+            }
+            // не получилось
             showFilterWarning();
             return;
         }

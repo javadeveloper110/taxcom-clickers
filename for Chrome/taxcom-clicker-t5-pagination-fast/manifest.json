@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Taxcom Clicker T5 With Pagination FAST",
+  "version": "1.1",
+  "description": "Обрабатывает ЭПЛ на сайте epl.taxcom.ru. Обрабатывает все ЭПЛ, с пагинацией, с возвращением на текущую страницу. Проверяет фильтры. Обрабатывает ошибку 502. Только Титул-5. Запуск: https://epl.taxcom.ru/at_signing/?start-t5-pagination-fast",
+  "icons": {
+    "16": "icons/16x16.png",
+    "32": "icons/32x32.png",
+    "64": "icons/64x64.png"
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "scripts/alert.js",
+        "scripts/helpers.js",
+        "scripts/main.js"
+      ],
+      "matches": ["https://epl.taxcom.ru/*"]
+    }
+  ]
+}

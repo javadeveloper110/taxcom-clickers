@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
   "name": "Taxcom Clicker Lower Check Filter",
-  "version": "0.5",
+  "version": "0.7",
 
-  "description": "promo_shown=1;SameSite=Strict; Кликает нижний ЭПЛ из списка. Если кнопка подписания зависнет, кликер вернется на список тайтлов. Проверяет фильтры. Запуск: https://epl.taxcom.ru/at_signing/?start-all-titles-lower-check-filter",
+  "description": "Кликает нижний ЭПЛ из списка. Если кнопка подписания зависнет, кликер вернется на список тайтлов. Проверяет и устанавливает фильтры. Запуск: https://epl.taxcom.ru/at_signing/?start-all-titles-lower-check-filter",
   "icons": {
     "48": "icons/icon_48.png"
   },

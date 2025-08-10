@@ -1,7 +1,7 @@
 
 
+
 function main() {
-    log("in function:", arguments.callee.name);
     /* настройки стилей и времени */
     const
         BORDER_STYLE_EMPTY = '5px solid #a1a1a1',
@@ -10,54 +10,51 @@ function main() {
         BORDER_STYLE_OK = '5px solid green',
         
         DELAY_BORDER_BLINK_MS = 500, // бордер мигает раз в 1 секунду
+        DELAY_LINK_CLICK_MS = 5000, // задержка между мереходами по страницам
+        DELAY_REDIRECT_TO_PREVENT_ALERTS = 60000, // при заглушеных алертах - перенаправлять на список
         DELAY_PAGE_RELOAD = 5000; // через сколько перезагружать страницу
     
 	/* паттерны урлов и идентификаторы страниц */
 	const
-        PLUGIN_VERSION = 'all-titles-lower-check-filter',
+        PLUGIN_VERSION = 'all-titles-bottom-4-if-4-or-more',
         
         TITLE_T5 = 'т5 - показания одометра при заезде',
         
         URL_AT_SIGNING = 'https://epl.taxcom.ru/at_signing/',
-        URL_START = 'https://epl.taxcom.ru/at_signing/?start-all-titles-lower-check-filter';
+        URL_START = 'https://epl.taxcom.ru/at_signing/?start-all-titles-bottom-4-if-4-or-more';
         
         MILEAGE_PATTERN = '^показания одометра: [0-9]+$',
         
 		URL_PATTERN_MAIN = '^https://epl.taxcom.ru/$', // тут жму на кнопку "Подписать"
-		URL_PATTERN_START_PLUGIN = '^https://epl.taxcom.ru/at_signing/\\?start-all-titles-lower-check-filter$', // запуск плагина
+		URL_PATTERN_START_PLUGIN = '^https://epl.taxcom.ru/at_signing/\\?start-all-titles-bottom-4-if-4-or-more$', // запуск плагина
 		URL_PATTERN_AT_SIGNING = '^https://epl.taxcom.ru/at_signing/$', // тут собираю урлы ЭПЛов
-		URL_PATTERN_WAYBILL = '^https://epl.taxcom.ru/waybill/[0-9]{7}/$', // тут жму "открыть" в блоке Т6
-		URL_PATTERN_WAYBILL_TITLE = '^https://epl.taxcom.ru/waybill/[0-9]{7,8}/[1-6]/$', // тут жму "подписать и отправить"
-		URL_PATTERN_GET_TITLE_NUMBER = '^https://epl.taxcom.ru/waybill/[0-9]{7,8}/([1-6])/$', // тут жму "подписать и отправить"
+		URL_PATTERN_WAYBILL = '^https://epl.taxcom.ru/waybill/[0-9]{7,8}/$', // тут жму "открыть" в блоке Т6
+		URL_PATTERN_WAYBILL_T6 = '^https://epl.taxcom.ru/waybill/[0-9]{7,8}/[1-6]/$', // тут жму "подписать и отправить"
 		
 		PAGE_ID_MAIN = 'main', // тут жму на кнопку "Подписать"
         PAGE_ID_START = 'start', // запуск плагина
 		PAGE_ID_AT_SIGNING = 'at-signing', // тут собираю урлы ЭПЛов
 		PAGE_ID_WAYBILL = 'waybill', // тут жму "открыть" в блоке Т6
-		PAGE_ID_WAYBILL_TITLE = 'waybill_title', // тут жму "подписать и отправить"
+		PAGE_ID_WAYBILL_T6 = 'waybill_t6', // тут жму "подписать и отправить"
 		
 		LOCATIONS = {};
 		
         LOCATIONS[PAGE_ID_START]      = URL_PATTERN_START_PLUGIN;
 		LOCATIONS[PAGE_ID_AT_SIGNING] = URL_PATTERN_AT_SIGNING;
-		LOCATIONS[PAGE_ID_WAYBILL_TITLE] = URL_PATTERN_WAYBILL_TITLE;
+		LOCATIONS[PAGE_ID_WAYBILL_T6] = URL_PATTERN_WAYBILL_T6;
 		LOCATIONS[PAGE_ID_WAYBILL] = URL_PATTERN_WAYBILL;
 		LOCATIONS[PAGE_ID_MAIN] = URL_PATTERN_MAIN;
     
-    log("start");
+    
 	
-    function setPluginVersion() {
-        log("in function:", arguments.callee.name);
-        window.sessionStorage.setItem("plugin_number", PLUGIN_VERSION);
-    }
+    function setPluginVersion() { window.sessionStorage.setItem("plugin_number", PLUGIN_VERSION); }
     
     function checkPluginVersion() {
-        log("in function:", arguments.callee.name);
         let res = window.sessionStorage.getItem("plugin_number") == PLUGIN_VERSION;
         if(res) {
             let
-                num = typeof window.sessionStorage.alerts_counter_plugin_lower != 'undefined' ? window.sessionStorage.alerts_counter_plugin_lower : 0,
-                fragment = create('<div>Плагин: all-titles-lower-check-filter. Кликает нижний ЭПЛ из списка. Если кнопка подписания зависнет, кликер вернется на список тайтлов. Проверяет фильтры.</div>');
+                num = typeof window.sessionStorage.alerts_counter != 'undefined' ? window.sessionStorage.alerts_counter : 0,
+                fragment = create('<div>&#128315;&#128315;&#128315;&#128315; Кликает НИЖНИЙ ЭПЛ при наличии 4-ёх ЭПЛ в списке. Обрабатывает все тайтлы.</div>');
             // You can use native DOM methods to insert the fragment:
             document.body.insertBefore(fragment, document.body.childNodes[0]);
         }
@@ -67,23 +64,7 @@ function main() {
 	/**
      * определяет открытую страницу и возвращает ее ИД
      */
-	function getCurrentTitleNumber() {
-        log("in function:", arguments.callee.name);
-		let
-            pattern = new RegExp(URL_PATTERN_GET_TITLE_NUMBER),
-            results = pattern.exec(document.location.href);
-        if(results.length == 2) {
-            return parseInt(results[1]);
-        } else {
-            return null;
-        }
-	}
-    
-	/**
-     * определяет открытую страницу и возвращает ее ИД
-     */
 	function getCurrentLocation() {
-        log("in function:", arguments.callee.name);
 		let pattern;
 		for(let id in LOCATIONS) {
 			pattern = new RegExp(LOCATIONS[id]);
@@ -94,58 +75,82 @@ function main() {
 		return undefined;
 	}
     
+    /* устанавливает стиль бордера */
+    function setBorderStyle(border_style, blink) {
+        if(blink) {
+            setInterval(function(border_style) {
+                if(document.body.style.border != border_style) {
+                    document.body.style.border = border_style;
+                } else {
+                    document.body.style.border = BORDER_STYLE_EMPTY;
+                }
+            }, DELAY_BORDER_BLINK_MS, border_style);
+        } else {
+            document.body.style.border = border_style;
+        }
+    }
+    
     /**
      * устанавливает сессию
      */
     function actionStart() {
-        log("in function:", arguments.callee.name);
-        setBorderStyle(BORDER_STYLE_OK);
+        setBorderStyle(BORDER_STYLE_OK, true);
         setPluginVersion();
         checkPluginVersion();
-        setTimeout(()=>{ location.href = URL_AT_SIGNING; }, 3000);
+        location.href = URL_AT_SIGNING;
     }
     
     /**
      * выполняет действия на странице PAGE_ID_MAIN
      */
     function actionMain() {
-        log("in function:", arguments.callee.name);
         if(!checkPluginVersion()) {
             return;
         }
+        
         //мигаю желтым - можно заполнять фильтр
-        setBorderStyle(BORDER_STYLE_WARNING);
+        setBorderStyle(BORDER_STYLE_WARNING, true);
     }
+    
     /**
      * выполняет действия на странице PAGE_ID_AT_SIGNING
      */
     function actionAtSigning() {
-        log("in function:", arguments.callee.name);
         if(!checkPluginVersion()) {
             return;
         }
+        log(arguments.callee.name);
+        // 502 ошибка
+        if(fixError502(URL_AT_SIGNING)) {
+            return;
+        }
         
+        // проверяю фильтры
         if(!checkFilters()) {
             setBorderStyle(BORDER_STYLE_WARNING);
+            // пытаюсь кликнуть по фильтру
+            if(pressEnterOnFilter()) {
+                location.href = URL_AT_SIGNING;
+            }
+            // не получилось
             showFilterWarning();
             return;
         }
-        // после попадания на список сбрасываю параметр
-        setBackToList(false);
         
         // ищу ссылка на ЭПЛы
         let links = document.querySelectorAll('.head-table a');
-        log("найдено", links.length, "ЭПЛ");
-        // Кликает нижний ЭПЛ на странице /at_signing
-        if(links.length == 0) {
-            // если ссылок не найдено, включаю мигание зеленым и перезагружаю страницу через время
-            setBorderStyle(BORDER_STYLE_OK);
-            log("перезагружаю страницу через", DELAY_PAGE_RELOAD, "секунд");
-            setTimeout(()=>{ location.reload(); }, DELAY_PAGE_RELOAD);
+        // Кликает верхний ЭПЛ, если на странице /at_signing больше двух записей
+        if(links.length < 4) {
+            // если ссылок меньше двух, включаю мигание зеленым и перезагружаю страницу через время
+            setBorderStyle(BORDER_STYLE_OK, true);
+            let timer_info = {};
+            timer_info['id'] = setTimeout(function(timer_info) {
+                clearTimeout(timer_info['id']);
+                location.reload();
+            }, DELAY_PAGE_RELOAD, timer_info);
         } else {
             // если ссылки есть, включаю зеленый бордер и через время перехожу по первой ссылке
-            setBorderStyle(BORDER_STYLE_OK);
-            log("кликаю последний");
+            setBorderStyle(BORDER_STYLE_OK, false);
             links[links.length-1].click();
         }
     }
@@ -154,7 +159,6 @@ function main() {
      * дял указанного блока проверяет наличие заполненного пробега
      */
     function blockHasMileageAssigned(block) {
-        log("in function:", arguments.callee.name);
         // ищу упоминание пробега
         let labels = block.querySelectorAll('div label.main-cont');
         let pattern = new RegExp(MILEAGE_PATTERN);
@@ -172,31 +176,27 @@ function main() {
      * выполняет действия на странице PAGE_ID_WAYBILL
      */
     function actionWaybill() {
-        log("in function:", arguments.callee.name);
         if(!checkPluginVersion()) {
             return;
         }
-        // если необходимо вернуться на список ЭПЛ - возвращаюсь
-        if(getBackToList()) {
-            log("возвращаюсь на список");
-            location.href = URL_AT_SIGNING;
+        log(arguments.callee.name);
+        // 502 ошибка
+        if(fixError502(URL_AT_SIGNING)) {
             return;
         }
-        
         // ищу все кнопки "заполнить"
-        log("ищу все кнопки \"заполнить\"");
         let
             blocks = document.querySelectorAll('.order-md-1 .card'),//a.btn.btn-green
             btn = false,
             header;
-        log("найдено:", blocks.length);
+        
         for(let i = 0; i < blocks.length; i++) {
             // в пятом блоке проверяю показания одометра если нет - пропускаю
             // сравниваю заголовок блока
             header = blocks[i].querySelector('.accordion-button');
             // если заголовка нет - значит сломалась структура документа
             if(!header) {
-                setBorderStyle(BORDER_STYLE_ERROR);
+                setBorderStyle(BORDER_STYLE_ERROR, true);
                 console.error("не найден заголовок блока");
                 return;
             }
@@ -217,14 +217,12 @@ function main() {
         
         if(!btn) {
             /* нет подходящих кнопок - возвращаюсь к списку */
-            setBorderStyle(BORDER_STYLE_WARNING);
-            log("нет подходящих кнопок - возвращаюсь к списку");
+            setBorderStyle(BORDER_STYLE_WARNING, true);
             location.href = URL_AT_SIGNING;
         } else {
-            setBorderStyle(BORDER_STYLE_OK);
-            log("запоминаю урл списка тайтлов");
-            setPrevUrl(document.location.href); // запоминаю урл списка тайтлов
-            log("переход по кнопке");
+            setBorderStyle(BORDER_STYLE_OK, false);
+            // запоминаю урл списка тайтлов
+            setPrevUrl(document.location.href);
             btn.click();
         }
     }
@@ -248,19 +246,18 @@ function main() {
     }
     
     /**
-     * выполняет действия на странице PAGE_ID_WAYBILL_TITLE
+     * выполняет действия на странице PAGE_ID_WAYBILL_T6
      */
     function actionWaybillTitle() {
-        log("in function:", arguments.callee.name);
         if(!checkPluginVersion()) {
             return;
         }
-        
-        // после обработки тайтлов т1, Т2, т4, Т5, Т6 - переход сразу на список
-        setBackToList([1, 2, 4, 5, 6].includes(getCurrentTitleNumber()));
-        
+        log(arguments.callee.name);
+        // 502 ошибка
+        if(fixError502(URL_AT_SIGNING)) {
+            return;
+        }
         // ищу кнопку "Подписать и отправить"
-        log("ищу кнопку \"Подписать и отправить\"");
         let
             buttons = document.querySelectorAll('.col-md-12 button.btn'),
             btn = false;
@@ -273,17 +270,15 @@ function main() {
         
         if(!btn || btn.disabled) {
             // кнопка не найдена или неактивна
-            log("кнопка не найдена или неактивна - перехожу на список");
-            setBorderStyle(BORDER_STYLE_WARNING);
+            setBorderStyle(BORDER_STYLE_WARNING, true);
             location.href = URL_AT_SIGNING;
         } else {
             log("кнопка найдена - кликаю. каждые три секунды проверяю наличие крутилки");
-            setBorderStyle(BORDER_STYLE_OK);
+            setBorderStyle(BORDER_STYLE_OK, false);
             btn.click();
             
             let timerInfo = {}; // сюда кладу айди таймера
             timerInfo['id'] = setInterval(checkCoverLayer, 3000, timerInfo);// каждые три секунды проверяю наличие крутилки
-            //setTimeout(()=>{ location.href = getPrevUrl(URL_AT_SIGNING); }, 20000);// если кнопка не сработает, то через 120 секунд кликер вернется в просмотр списка тайтлов для данного ЭПЛ
         }
     }
     
@@ -291,18 +286,20 @@ function main() {
      * выполняет действия на неизвестной странице
      */
     function actionUndefined() {
-        log("in function:", arguments.callee.name);
         if(!checkPluginVersion()) {
             return;
         }
-        log("ХЗ куда я попал - тут меня быть не должно");
-        setBorderStyle(BORDER_STYLE_ERROR);
+        log(arguments.callee.name, "ХЗ куда я попал - тут меня быть не должно");
+        // 502 ошибка
+        if(fixError502(URL_AT_SIGNING)) {
+            return;
+        }
+        setBorderStyle(BORDER_STYLE_ERROR, true);
     }
     
 	/* определяю какая страница открыта */
     let page_id = getCurrentLocation();
     
-    log("определяю какая страница открыта:", page_id);
 	switch(page_id) {
         case PAGE_ID_START:
             actionStart();
@@ -316,7 +313,7 @@ function main() {
         case PAGE_ID_WAYBILL:
             actionWaybill();
             break;
-        case PAGE_ID_WAYBILL_TITLE:
+        case PAGE_ID_WAYBILL_T6:
             actionWaybillTitle();
             break;
         default:

@@ -14,17 +14,17 @@ function main() {
     
 	/* паттерны урлов и идентификаторы страниц */
 	const
-        PLUGIN_VERSION = 'all-titles-lower-check-filter',
+        PLUGIN_VERSION = 'all-titles-upper-check-filter',
         
         TITLE_T5 = 'т5 - показания одометра при заезде',
         
         URL_AT_SIGNING = 'https://epl.taxcom.ru/at_signing/',
-        URL_START = 'https://epl.taxcom.ru/at_signing/?start-all-titles-lower-check-filter';
+        URL_START = 'https://epl.taxcom.ru/at_signing/?start-all-titles-upper-check-filter';
         
         MILEAGE_PATTERN = '^показания одометра: [0-9]+$',
         
 		URL_PATTERN_MAIN = '^https://epl.taxcom.ru/$', // тут жму на кнопку "Подписать"
-		URL_PATTERN_START_PLUGIN = '^https://epl.taxcom.ru/at_signing/\\?start-all-titles-lower-check-filter$', // запуск плагина
+		URL_PATTERN_START_PLUGIN = '^https://epl.taxcom.ru/at_signing/\\?start-all-titles-upper-check-filter$', // запуск плагина
 		URL_PATTERN_AT_SIGNING = '^https://epl.taxcom.ru/at_signing/$', // тут собираю урлы ЭПЛов
 		URL_PATTERN_WAYBILL = '^https://epl.taxcom.ru/waybill/[0-9]{7}/$', // тут жму "открыть" в блоке Т6
 		URL_PATTERN_WAYBILL_TITLE = '^https://epl.taxcom.ru/waybill/[0-9]{7,8}/[1-6]/$', // тут жму "подписать и отправить"
@@ -56,8 +56,8 @@ function main() {
         let res = window.sessionStorage.getItem("plugin_number") == PLUGIN_VERSION;
         if(res) {
             let
-                num = typeof window.sessionStorage.alerts_counter_plugin_lower != 'undefined' ? window.sessionStorage.alerts_counter_plugin_lower : 0,
-                fragment = create('<div>Плагин: all-titles-lower-check-filter. Кликает нижний ЭПЛ из списка. Если кнопка подписания зависнет, кликер вернется на список тайтлов. Проверяет фильтры.</div>');
+                num = typeof window.sessionStorage.alerts_counter_plugin_upper != 'undefined' ? window.sessionStorage.alerts_counter_plugin_upper : 0,
+                fragment = create('<div>Плагин: all-titles-upper-check-filter. Кликает верхний ЭПЛ из списка. Если кнопка подписания зависнет, кликер вернется на список тайтлов. Проверяет фильтры. Обрабатывает ошибки 502, 504.</div>');
             // You can use native DOM methods to insert the fragment:
             document.body.insertBefore(fragment, document.body.childNodes[0]);
         }
@@ -113,6 +113,10 @@ function main() {
         if(!checkPluginVersion()) {
             return;
         }
+        // 502 ошибка
+        if(fixError502(URL_AT_SIGNING)) {
+            return;
+        }
         //мигаю желтым - можно заполнять фильтр
         setBorderStyle(BORDER_STYLE_WARNING);
     }
@@ -124,12 +128,22 @@ function main() {
         if(!checkPluginVersion()) {
             return;
         }
+        // 502 ошибка
+        if(fixError502(URL_AT_SIGNING)) {
+            return;
+        }
         
         if(!checkFilters()) {
             setBorderStyle(BORDER_STYLE_WARNING);
+            // пытаюсь кликнуть по фильтру
+            if(pressEnterOnFilter()) {
+                location.href = URL_AT_SIGNING;
+            }
+            // не получилось
             showFilterWarning();
             return;
         }
+        
         // после попадания на список сбрасываю параметр
         setBackToList(false);
         
@@ -146,7 +160,7 @@ function main() {
             // если ссылки есть, включаю зеленый бордер и через время перехожу по первой ссылке
             setBorderStyle(BORDER_STYLE_OK);
             log("кликаю последний");
-            links[links.length-1].click();
+            links[0].click();
         }
     }
     
@@ -174,6 +188,10 @@ function main() {
     function actionWaybill() {
         log("in function:", arguments.callee.name);
         if(!checkPluginVersion()) {
+            return;
+        }
+        // 502 ошибка
+        if(fixError502(URL_AT_SIGNING)) {
             return;
         }
         // если необходимо вернуться на список ЭПЛ - возвращаюсь
@@ -255,6 +273,10 @@ function main() {
         if(!checkPluginVersion()) {
             return;
         }
+        // 502 ошибка
+        if(fixError502(URL_AT_SIGNING)) {
+            return;
+        }
         
         // после обработки тайтлов т1, Т2, т4, Т5, Т6 - переход сразу на список
         setBackToList([1, 2, 4, 5, 6].includes(getCurrentTitleNumber()));
@@ -293,6 +315,10 @@ function main() {
     function actionUndefined() {
         log("in function:", arguments.callee.name);
         if(!checkPluginVersion()) {
+            return;
+        }
+        // 502 ошибка
+        if(fixError502(URL_AT_SIGNING)) {
             return;
         }
         log("ХЗ куда я попал - тут меня быть не должно");

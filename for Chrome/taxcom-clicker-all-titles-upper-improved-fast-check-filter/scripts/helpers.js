@@ -1,4 +1,22 @@
-/***/
+/** обрабатывает 502 ошибку */
+function fixError502(redirect) {
+    log("in function:", arguments.callee.name);
+    let
+        hh = document.getElementsByTagName('h1'),
+        errors = [
+            "502 Bad Gateway".toLowerCase(),
+            "504 Gateway Time-out".toLowerCase(),
+        ];
+    
+    if(hh.length != 1 || !errors.includes(hh[0].firstChild.data.toLowerCase())) {
+        return false;
+    }
+    // если найдена 502 - перезагружаю страницу
+    location.href = redirect;
+    return true;
+}
+
+/** устанавливает дефоолтные фильтра на странице at signing */
 function pressEnterOnFilter() {
     log("in function:", arguments.callee.name);
     const filter = document.getElementById('filter_click');
@@ -14,8 +32,7 @@ function pressEnterOnFilter() {
     
     return false;
 }
-
-/** создает tml-лемент для вставки в страницу */
+/** создает html-лемент для вставки в страницу */
 function create(htmlStr) {
     log("in function:", arguments.callee.name);
     var

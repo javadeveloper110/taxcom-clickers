@@ -1,0 +1,75 @@
+/** устанавливает дефоолтные фильтра на странице at signing */
+function pressEnterOnFilter() {
+    log("in function:", arguments.callee.name);
+    const filter = document.getElementById('filter_click');
+    
+    filter.click();
+    
+    let buttons = document.getElementsByClassName("ui-btn ui-btn-primary ui-btn-icon-search main-ui-filter-field-button  main-ui-filter-find filter-container-find");
+    
+    if(buttons.length == 1) {
+        buttons[0].click();
+        return true;
+    }
+    
+    return false;
+}
+
+/** проверяет - установлены ли фильтры */
+function checkFilters() {
+    log("in function:", arguments.callee.name);
+    let filters = document.querySelectorAll('.filter-conteaner-search .main-ui-filter-search-square');
+    log("найдено фильтров:", filters.length);
+    return filters.length > 0;
+}
+
+/** обрабатывает 502 ошибку */
+function fixError502(redirect) {
+    log("in function:", arguments.callee.name);
+    let
+        hh = document.getElementsByTagName('h1'),
+        errors = [
+            "502 Bad Gateway".toLowerCase(),
+            "504 Gateway Time-out".toLowerCase(),
+        ];
+    
+    if(hh.length != 1 || !errors.includes(hh[0].firstChild.data.toLowerCase())) {
+        return false;
+    }
+    // если найдена 502 - перезагружаю страницу
+    location.href = redirect;
+    return true;
+}
+
+/** создает tml-лемент для вставки в страницу */
+function create(htmlStr) {
+        var frag = document.createDocumentFragment(),
+            temp = document.createElement('div');
+        temp.innerHTML = htmlStr;
+        while (temp.firstChild) {
+            frag.appendChild(temp.firstChild);
+        }
+        return frag;
+    }
+    
+/**
+* возвращает сохраненный урл из сессии, или дефолтный - default_url
+*/
+function getPrevUrl(default_url) {
+    if(window.sessionStorage.getItem("prev_url")) {
+        return window.sessionStorage.getItem("prev_url");
+    } else {
+        return default_url;
+    }
+}
+
+/**
+* сохраняет урл в сессию
+*/
+function setPrevUrl(url) {
+    window.sessionStorage.setItem("prev_url", url);
+}
+
+function log() {
+    console.log(...arguments);
+}
